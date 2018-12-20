@@ -32,6 +32,9 @@ protected:
 	bool loadRLEData(std::ifstream &in);
 	bool unloadRLEData(std::ofstream &out);
 
+	bool flipVertically();
+	bool flipHorizontally();
+
 public:
 	enum Format
 	{
