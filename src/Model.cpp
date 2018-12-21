@@ -24,6 +24,7 @@ Model::Model(const char* filename)
 		std::getline(is,line);
 
 		isstream.str(line);
+		isstream.clear();
 
 		char trash;
 
