@@ -115,10 +115,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\TGAImage.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\Geometry.h" />
     <ClInclude Include="src\TGAImage.h" />
   </ItemGroup>
