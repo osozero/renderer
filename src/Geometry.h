@@ -130,7 +130,7 @@ std::ostream& operator<<(std::ostream& os, Vec3<float> v)
 	return os;
 }
 
-typedef Vec2<float> Vec2f;
-		typedef Vec2<int> Vec2i;
-		typedef Vec3<float> Vec3f;
-		typedef Vec3<int> Vec3i;
+	typedef Vec2<float> Vec2f;
+	typedef Vec2<int> Vec2i;
+	typedef Vec3<float> Vec3f;
+	typedef Vec3<int> Vec3i;
