@@ -34,7 +34,7 @@ template<class t>
 
 	inline Vec2<t> operator-(const Vec2<t> &vec) const
 	{
-		return Vec2<t>(u - vec.u.v - vec.v);
+		return Vec2<t>(u - vec.u,v - vec.v);
 	}
 
 	inline Vec2<t> operator*(float f)	const
