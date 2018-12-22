@@ -65,7 +65,7 @@ int main(int argc,char**argv)
 		arg = argv[1];
 	}else
 	{
-		arg = "obj/head.obj";
+		arg = "resource/model/head.obj";
 	}
 
 	auto model = std::make_unique<Model>(Model(arg.c_str()));
