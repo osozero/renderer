@@ -19,6 +19,8 @@ template<class t>
 			t x;
 			t y;
 		};
+
+		t raw[2];
 	};
 
 	Vec2()
@@ -40,6 +42,16 @@ template<class t>
 	inline Vec2<t> operator*(float f)	const
 	{
 		return Vec2<t>(u*f, v*f);
+	}
+
+	inline t& operator[](int i)
+	{
+		return raw[i];
+	}
+
+	inline t operator[](int i) const
+	{
+		return raw[i];
 	}
 
 	template <class > 
@@ -74,6 +86,9 @@ template<class t>
 		Vec3(t _x, t _y, t _z)
 			:x(_x),y(_y),z(_z) {}
 
+		Vec3(Vec2<t> v2, t f)
+			:x(v2.x), y(v2.y), z(f){}
+
 		inline Vec3<t> cross(const Vec3<t> &v) const
 		{
 			return Vec3<t>(
@@ -102,9 +117,19 @@ template<class t>
 			return Vec3<t>(x*f, y *f, z *f);
 		}
 
+		inline t& operator[](int i)
+		{
+			return raw[i];
+		}
+
+		inline t operator[](int i) const
+		{
+			return raw[i];
+		}
+
 		float length() const
 		{
-			return sqrt(x.x + y.y + z.z);
+			return sqrt(x*x + y*y + z*z);
 		}
 
 		Vec3<t>& normalize() const
@@ -128,6 +153,12 @@ std::ostream& operator<<(std::ostream& os, Vec3<float> v)
 {
 	os << "(" << v.x << ", " << v.y << ", " << v.z << ")\n";
 	return os;
+}
+
+template<class t>
+ Vec3<t> cross(const Vec3<t> &v1, const Vec3<t> &v2)
+{
+	return Vec3<t>(v1.y * v2.z - v1.z*v2.y, -(v1.x*v2.z - v2.x*v1.z), v1.x*v2.y - v2.x*v1.y);
 }
 
 	typedef Vec2<float> Vec2f;

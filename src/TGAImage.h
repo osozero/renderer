@@ -38,7 +38,7 @@ struct TGAColor
 	TGAColor()
 		:val(0),bytesPp(1){}
 
-	TGAColor(unsigned char R,unsigned char G, unsigned char B, unsigned char A)
+	TGAColor(unsigned char R,unsigned char G, unsigned char B, unsigned char A=255)
 		:r(R),g(G),b(B),a(A){}
 
 	TGAColor(int v, int bpp)
@@ -96,6 +96,16 @@ public:
 
 	TGAColor get(int x, int y) const;
 	bool set(int x, int y, TGAColor c);
+
+	inline int getWidth() const
+	{
+		return this->width;
+	}
+
+	inline int getHeight() const
+	{
+		return this->height;
+	}
 
 	~TGAImage();
 };

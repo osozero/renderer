@@ -3,6 +3,7 @@
 #include <iostream>
 #include "TGAImage.h"
 #include "Model.h"
+#include <algorithm>
 
 const TGAColor white(255, 255, 255,255);
 const TGAColor red(255, 0, 0, 255);
@@ -12,6 +13,67 @@ const int width = 800;
 const int height = 800;
 
 
+Vec3f barycentric2(Vec2i *pts, Vec2i P) {
+	Vec3f u = cross(Vec3f(pts[2][0] - pts[0][0], pts[1][0] - pts[0][0], pts[0][0] - P[0]), Vec3f(pts[2][1] - pts[0][1], pts[1][1] - pts[0][1], pts[0][1] - P[1]));
+	/* `pts` and `P` has integer value as coordinates
+	   so `abs(u[2])` < 1 means `u[2]` is 0, that means
+	   triangle is degenerate, in this case return something with negative coordinates */
+	if (std::abs(u[2]) < 1) return Vec3f(-1, 1, 1);
+	return Vec3f(1.f - (u.x + u.y) / u.z, u.y / u.z, u.x / u.z);
+}
+
+Vec3f barycentric(Vec2i *pts, Vec2i P)
+{
+
+
+	float u;
+	float v;
+	float w;
+
+	Vec3i AB(pts[1] - pts[0], 0.0);
+	Vec3i AP(P - pts[0], 0.0);
+
+	Vec3i BC(pts[2] - pts[1], 0.0);
+	Vec3i BP(P - pts[1], 0.0);
+
+	Vec3i CA(pts[0] - pts[2], 0.0);
+	Vec3i CP(P - pts[2], 0.0);
+
+
+	//for plane normal calculation
+	Vec3i AC(pts[2] - pts[0], 0.0);
+
+	Vec3i normal = cross(AB, AC);
+
+	float denom = normal.dot(normal);
+
+	Vec3i crossABAP = cross(AB, AP);
+
+	if(normal.dot(crossABAP)<0)
+	{
+		return Vec3f(-1, -1, -1);
+	}
+
+	Vec3i crossBCBP = cross(BC, BP);
+
+	if((u=normal.dot(crossBCBP))<0)
+	{
+		return Vec3f(-1, -1, -1);
+	}
+
+	Vec3i crossCACP = cross(CA, CP);
+
+	if((v=normal.dot(crossCACP)<0))
+	{
+		return Vec3f(-1, -1, -1);
+	}
+
+	u /= denom;
+	v /= denom;
+	w = 1 - u - v;
+
+	return Vec3f(w, u, v);
+}
 
 void line(Vec2i v1, Vec2i v2,TGAImage &image,const TGAColor &color)
 {
@@ -56,75 +118,40 @@ void line(Vec2i v1, Vec2i v2,TGAImage &image,const TGAColor &color)
 	}
 }
 
-void triangle(Vec2i v1,Vec2i v2,Vec2i v3,TGAImage &image, const TGAColor &color)
+void triangle(Vec2i *pts,TGAImage &image, const TGAColor &color)
 {
-	//sort v1,v2,v3 asc by their y values
-	if(v1.y>v2.y)
+	Vec2i bboxmin(image.getWidth() - 1, image.getHeight() - 1);
+
+	Vec2i bboxmax(0, 0);
+
+	Vec2i clamp(image.getWidth() - 1, image.getHeight() - 1);
+
+	for(int i=0;i<3;i++)
 	{
-		std::swap(v1, v2);
-	}
-
-	if(v1.y>v3.y)
-	{
-		std::swap(v1, v3);
-	}
-
-	if(v2.y>v3.y)
-	{
-		std::swap(v2, v3);
-	}
-
-
-	int totalHeight = v3.y - v1.y;
-
-	
-
-	for(int i = v1.y; i<=v2.y;i++)
-	{
-		int segmentHeight = v2.y - v1.y + 1;
-		float alpha = static_cast<float>(i - v1.y) / totalHeight;
-		float beta = static_cast<float>(i - v1.y) / segmentHeight;
-
-		Vec2i a = v1 + (v3 - v1)*alpha;
-		Vec2i b = v1 + (v2 - v1)*beta;
-
-		if(a.x>b.x)
+		for(int j=0;j<2;j++)
 		{
-			std::swap(a, b);
-		}
-
-		for(int j = a.x;j<=b.x;j++)
-		{
-			image.set(j, i, color);
-			//std::cout << j << "," << i << "--";
-		}
-
-		//std::cout<<std::endl;
-	}
-
-	for(int y=v2.y;y<=v3.y;y++)
-	{
-		int segmentHeight = v3.y - v2.y+1;
-		float alpha = static_cast<float>(y - v1.y) / totalHeight;
-		float beta = static_cast<float>(y - v2.y) / segmentHeight;
-
-		Vec2i a = v1 + (v3 - v1)*alpha;
-		Vec2i b = v2 + (v3 - v2)*beta;
-
-		if(a.x>b.x)
-		{
-			std::swap(a, b);
-		}
-
-		for(int j = a.x;j<=b.x;j++)
-		{
-			image.set(j, y, color);
+			bboxmin[j] = std::max(0, std::min(bboxmin[j], pts[i][j]));
+			bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], pts[i][j]));
 		}
 	}
 
+	Vec2i P;
+
+	for(P.x=bboxmin.x;P.x<=bboxmax.x;P.x++)
+	{
+		for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++)
+		{
+			Vec3f bc_screen = barycentric(pts, P);
+
+			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0)
+			{
+				continue;
+			}
+
+			image.set(P.x, P.y, color);
+		}
+	}
 }
-
-
 
 void loadModelAndDrawWireframe()
 {
@@ -156,19 +183,18 @@ void loadModelAndDrawWireframe()
 	image.flipVertically();
 	image.writeTGAFile("out.tga");
 }
-int main(int argc,char**argv)
+
+int main(int argc, char**argv)
 {
-	TGAImage image(width, height, TGAImage::RGB);
+	TGAImage frame(200, 200, TGAImage::RGB);
+	Vec2i pts[3] = { Vec2i(10,10), Vec2i(100, 30), Vec2i(190, 160) };
 
-	Vec2i t0[3] = { Vec2i(10, 70),   Vec2i(50, 160),  Vec2i(70, 120 )};
-	Vec2i t1[3] = { Vec2i(180, 50),  Vec2i(150, 1),   Vec2i(70, 180) };
-	Vec2i t2[3] = { Vec2i(180, 150), Vec2i(120, 160), Vec2i(130, 180) };
-	triangle(t0[0], t0[1], t0[2], image, red);
-	triangle(t1[0], t1[1], t1[2], image, white);
-	triangle(t2[0], t2[1], t2[2], image, green);
 
-	image.flipVertically();
-	image.writeTGAFile("out3.tga");
+	triangle(pts, frame, TGAColor(255, 0, 0));
+
+	frame.flipVertically();
+
+	frame.writeTGAFile("rasterized2.tga");
 	
 	return 0;
 }
