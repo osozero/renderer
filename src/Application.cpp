@@ -165,26 +165,21 @@ void loadModelAndDrawWireframe()
 	{
 		std::vector<int>  face = model->face(i);
 
+		Vec2i scrCoords[3];
 		for (int j = 0; j < 3; j++)
 		{
-			auto v0 = model->vert(face[j]);
-			auto v1 = model->vert(face[(j + 1) % 3]);
-
-			int x0 = (v0.x + 1.0)*width / 2.0;
-			int y0 = (v0.y + 1.0)*height / 2.0;
-
-			int x1 = (v1.x + 1.0)*width / 2.0;
-			int y1 = (v1.y + 1.0)*height / 2.0;
-
-			line(Vec2i(x0, y0), Vec2i(x1, y1), image, white);
+			auto wordCoords = model->vert(face[j]);
+			scrCoords[j] = Vec2i((wordCoords.x + 1)*width/2, (wordCoords.y + 1)*height/2);			
 		}
+
+		triangle(scrCoords, image, TGAColor(rand() % 255, rand() % 255, rand() % 255));
 	}
 
 	image.flipVertically();
-	image.writeTGAFile("out.tga");
+	image.writeTGAFile("rasterized-random-colored-face.tga");
 }
 
-int main(int argc, char**argv)
+void rasterizeOneTriangle()
 {
 	TGAImage frame(200, 200, TGAImage::RGB);
 	Vec2i pts[3] = { Vec2i(10,10), Vec2i(100, 30), Vec2i(190, 160) };
@@ -195,6 +190,11 @@ int main(int argc, char**argv)
 	frame.flipVertically();
 
 	frame.writeTGAFile("rasterized2.tga");
+}
+
+int main(int argc, char**argv)
+{
+	loadModelAndDrawWireframe();
 	
 	return 0;
 }
