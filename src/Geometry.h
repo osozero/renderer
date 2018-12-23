@@ -117,6 +117,17 @@ template<class t>
 			return Vec3<t>(x*f, y *f, z *f);
 		}
 
+		inline Vec3<t> operator/(float f)
+		{
+			this->x/= f;
+			this->y/= f;
+			this->z /= f;
+
+			return *this;
+		}
+
+		
+
 		inline t& operator[](int i)
 		{
 			return raw[i];
@@ -132,9 +143,9 @@ template<class t>
 			return sqrt(x*x + y*y + z*z);
 		}
 
-		Vec3<t>& normalize() const
+		Vec3<t>& normalize()
 		{
-			*this = (*this) / length();
+			*this = (*this) * (1/this->length());
 			return *this;
 		}
 

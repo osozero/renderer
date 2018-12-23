@@ -13,6 +13,8 @@ const int width = 800;
 const int height = 800;
 
 
+
+
 Vec3f barycentric2(Vec2i *pts, Vec2i P) {
 	Vec3f u = cross(Vec3f(pts[2][0] - pts[0][0], pts[1][0] - pts[0][0], pts[0][0] - P[0]), Vec3f(pts[2][1] - pts[0][1], pts[1][1] - pts[0][1], pts[0][1] - P[1]));
 	/* `pts` and `P` has integer value as coordinates
@@ -155,28 +157,42 @@ void triangle(Vec2i *pts,TGAImage &image, const TGAColor &color)
 
 void loadModelAndDrawWireframe()
 {
+
 	std::string arg = "resource/model/head.obj";
 
 	auto model = std::make_unique<Model>(Model(arg.c_str()));
 
 	TGAImage image(width, height, TGAImage::RGB);
 
+	const Vec3f lightDirection(0,0, -1);
+
+	Vec3f normal;
+	float intensity = 0.0f;
 	for (int i = 0; i < model->numberOfFaces(); i++)
 	{
 		std::vector<int>  face = model->face(i);
 
 		Vec2i scrCoords[3];
+		Vec3f worldCoords[3];
 		for (int j = 0; j < 3; j++)
 		{
-			auto wordCoords = model->vert(face[j]);
-			scrCoords[j] = Vec2i((wordCoords.x + 1)*width/2, (wordCoords.y + 1)*height/2);			
+			worldCoords[j] = model->vert(face[j]);
+			scrCoords[j] = Vec2i((worldCoords[j].x + 1)*width/2, (worldCoords[j].y + 1)*height/2);
 		}
+		normal = cross(worldCoords[2] - worldCoords[0], worldCoords[1] - worldCoords[0]);
+		
+		normal.normalize();
 
-		triangle(scrCoords, image, TGAColor(rand() % 255, rand() % 255, rand() % 255));
+		intensity = lightDirection.dot(normal);
+
+		if(intensity>0)
+		{
+			triangle(scrCoords, image, TGAColor(intensity*255, intensity*255, intensity * 255));
+		}
 	}
 
 	image.flipVertically();
-	image.writeTGAFile("rasterized-random-colored-face.tga");
+	image.writeTGAFile("rasterized-lighted-face.tga");
 }
 
 void rasterizeOneTriangle()
