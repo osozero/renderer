@@ -4,7 +4,7 @@
 #include <sstream>
 
 Model::Model(const char* filename)
-	:_verts(),_faces()
+	:_verts(),_faces(),_textures(),_normals()
 {
 	std::ifstream is;
 
@@ -41,18 +41,46 @@ Model::Model(const char* filename)
 			_verts.push_back(v);
 		}else if(!line.compare(0,2,"f "))
 		{
-			std::vector<int>f;
+			std::vector<Vec3i>v;
 			int iTrash, idx;
 
+			Vec3i v2;
 			isstream >> trash;
 
-			while(isstream>>idx>>trash>>iTrash>>trash>>iTrash)
+			
+
+			while(isstream>>v2.x>>trash>>v2.y>>trash>>v2.z)
 			{
-				idx--;
-				f.push_back(idx);
+				v2.x -= 1;
+				v2.y -= 1;
+				v2.z -= 1;
+				v.push_back(v2);
 			}
 
-			_faces.push_back(f);
+			_faces.push_back(v);
+		}
+		else if(!line.compare(0,2,"vt"))
+		{
+			Vec3f t;
+			
+			isstream >> trash;
+			isstream >> trash;
+
+			isstream >> t.x >> t.y >> t.z;
+
+			_textures.push_back(t);
+
+		}
+		else if(!line.compare(0, 2, "vn"))
+		{
+			Vec3f n;
+
+			isstream >> trash;
+			isstream >> trash;
+
+			isstream >> n.x >> n.y >> n.z;
+
+			_normals.push_back(n);
 		}
 	}
 
@@ -69,12 +97,32 @@ int Model::numberOfFaces()
 	return static_cast<int>(_faces.size());
 }
 
+int Model::numberOfTextures()
+{
+	return static_cast<int>(_textures.size());
+}
+
+int Model::numberOfNormals()
+{
+	return static_cast<int>(_normals.size());
+}
+
 Vec3f Model::vert(int i)
 {
 	return _verts.at(i);
 }
 
-std::vector<int> Model::face(int index)
+std::vector<Vec3i> Model::face(int index)
 {
 	return _faces.at(index);
+}
+
+Vec3f Model::texture(int index)
+{
+	return _textures.at(index);
+}
+
+Vec3f Model::normal(int index)
+{
+	return _normals.at(index);
 }

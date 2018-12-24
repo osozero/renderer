@@ -1,98 +1,40 @@
 
 #include <memory>
-#include <iostream>
 #include "TGAImage.h"
 #include "Model.h"
 #include <algorithm>
+#include <iostream>
+#include <string>
 
 const TGAColor white(255, 255, 255, 255);
 const TGAColor red(255, 0, 0, 255);
 const TGAColor green(0, 255, 0, 255);
 
+float intensity;
+
 const int width = 800;
 const int height = 800;
 
+void triangleWithZBuffer(Vec3f* pts, float* zbuffer, TGAImage& image, TGAColor* color, Vec3f* vertexNormals,
+                         Vec3f* textureCoords, TGAImage& texture);
 
 Vec3f world2screen(Vec3f v)
 {
 	return Vec3f(int((v.x + 1.) * width / 2. + .5), int((v.y + 1.) * height / 2. + .5), v.z);
 }
 
-Vec3f barycentric2(Vec2i* pts, Vec2i P)
+TGAColor getColorFromTextureMap(TGAImage& texture, Vec3f texCoords);
+
+Vec3f barycentric(Vec3f A, Vec3f B, Vec3f C, Vec3f P)
 {
-	Vec3f u = cross(Vec3f(pts[2][0] - pts[0][0], pts[1][0] - pts[0][0], pts[0][0] - P[0]),
-	                Vec3f(pts[2][1] - pts[0][1], pts[1][1] - pts[0][1], pts[0][1] - P[1]));
-	/* `pts` and `P` has integer value as coordinates
-	   so `abs(u[2])` < 1 means `u[2]` is 0, that means
-	   triangle is degenerate, in this case return something with negative coordinates */
-	if (std::abs(u[2]) < 1) return Vec3f(-1, 1, 1);
-	return Vec3f(1.f - (u.x + u.y) / u.z, u.y / u.z, u.x / u.z);
-}
-
-Vec3f barycentric3(Vec3f A, Vec3f B, Vec3f C, Vec3f P)
-{
-	float u;
-	float v;
-	float w;
-
-	//A.z = 0;
-	//B.z = 0;
-	//C.z = 0;
-	//
-	//P.z = 0;
-
-	Vec3f AB(B - A);
-	Vec3f AP(P - A);
-
-	Vec3f BC(C - B);
-	Vec3f BP(P - B);
-
-	Vec3f CA(A - C);
-	Vec3f CP(P - C);
-
-	//for plane normal calculation
-	Vec3f AC(C - A);
-
-	Vec3f normal = cross(AB, AC);
-
-	float denom = normal.dot(normal);
-
-	Vec3f crossABAP = cross(AB, AP);
-
-	if (normal.dot(crossABAP) < 0)
-	{
-		return Vec3f(-1, -1, -1);
-	}
-
-	Vec3f crossBCBP = cross(BC, BP);
-
-	if ((u = normal.dot(crossBCBP)) < 0)
-	{
-		return Vec3f(-1, -1, -1);
-	}
-
-	Vec3f crossCACP = cross(CA, CP);
-
-	if ((v = normal.dot(crossCACP) < 0))
-	{
-		return Vec3f(-1, -1, -1);
-	}
-
-	u /= denom;
-	v /= denom;
-	w = 1 - u - v;
-
-	return Vec3f(w, u, v);
-}
-
-Vec3f barycentric(Vec3f A, Vec3f B, Vec3f C, Vec3f P) {
 	Vec3f s[2];
-	for (int i = 2; i--; ) {
-		s[i][0] = C[i] - A[i];//x=> 1- > C.y-A.y , 0 -> C.x-A.x
-		s[i][1] = B[i] - A[i];//y=> 1- > B.y-A.y , 0 -> B.x-A.x
-		s[i][2] = A[i] - P[i];//z=> 1- > C.y-P.y , 0 -> C.x-P.x
+	for (int i = 2; i--;)
+	{
+		s[i][0] = C[i] - A[i]; //x=> 1- > C.y-A.y , 0 -> C.x-A.x
+		s[i][1] = B[i] - A[i]; //y=> 1- > B.y-A.y , 0 -> B.x-A.x
+		s[i][2] = A[i] - P[i]; //z=> 1- > C.y-P.y , 0 -> C.x-P.x
 	}
-	Vec3f u = cross(s[0], s[1]);//CA.x,BA.x,CP.x  -  CA.y, BA.y, CP.y
+	Vec3f u = cross(s[0], s[1]); //CA.x,BA.x,CP.x  -  CA.y, BA.y, CP.y
 
 
 	if (std::abs(u[2]) > 1e-2) // dont forget that u[2] is integer. If it is zero then triangle ABC is degenerate
@@ -144,119 +86,78 @@ void line(Vec2i v1, Vec2i v2, TGAImage& image, const TGAColor& color)
 	}
 }
 
-//send to barycentric2
-void triangle(Vec2i* pts, TGAImage& image, const TGAColor& color)
+void triangleWithZBuffer(Vec3f* pts, float* zbuffer, TGAImage& image, TGAColor* color, Vec3f* vertexNormals,
+                         Vec3f* textureCoords, TGAImage& texture)
 {
-	Vec2i bboxmin(image.getWidth() - 1, image.getHeight() - 1);
+	Vec2f bboxmin(std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
 
-	Vec2i bboxmax(0, 0);
+	Vec2f bboxmax(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
 
-	Vec2i clamp(image.getWidth() - 1, image.getHeight() - 1);
+	Vec2f clamp(image.getWidth() - 1, image.getHeight() - 1);
 
 	for (int i = 0; i < 3; i++)
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			bboxmin[j] = std::max(0, std::min(bboxmin[j], pts[i][j]));
-			bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], pts[i][j]));
-		}
-	}
-
-	Vec2i P;
-
-	for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++)
-	{
-		for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++)
-		{
-			Vec3f bc_screen = barycentric2(pts, P);
-
-			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0)
-			{
-				continue;
-			}
-
-			image.set(P.x, P.y, color);
-		}
-	}
-}
-
-void triangleWithZBuffer(Vec3f* pts, float* zbuffer, TGAImage& image, TGAColor color)
-{
-	Vec2f bboxmin(std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
-	Vec2f bboxmax(std::numeric_limits<float>::min(),std::numeric_limits<float>::min());
-	Vec2f clamp(image.getWidth() - 1, image.getHeight() - 1);
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 2; j++) {
 			bboxmin[j] = std::max(0.f, std::min(bboxmin[j], pts[i][j]));
 			bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], pts[i][j]));
 		}
 	}
+
 	Vec3f P;
-	for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++) {
-		for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++) {
+	Vec3f light(0, 0, -1);
+	for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++)
+	{
+		for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++)
+		{
 			Vec3f bc_screen = barycentric(pts[0], pts[1], pts[2], P);
+
 			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0) continue;
+
 			P.z = 0;
-			for (int i = 0; i < 3; i++) P.z += pts[i][2] * bc_screen[i];
-			if (zbuffer[int(P.x + P.y*width)] < P.z) {
-				zbuffer[int(P.x + P.y*width)] = P.z;
-				image.set(P.x, P.y, color);
+
+			for (int i = 0; i < 3; i++)
+			{
+				P.z += pts[i][2] * bc_screen[i];
+			}
+
+
+			if (zbuffer[int(P.x + P.y * width)] < P.z)
+			{
+				zbuffer[int(P.x + P.y * width)] = P.z;
+
+				Vec3f normal = vertexNormals[0] * bc_screen[0] +
+					vertexNormals[1] * bc_screen[1] +
+					vertexNormals[2] * bc_screen[2];
+
+				normal.normalize();
+				light.normalize();
+				float intensity = normal.dot(light);
+
+				auto baryCentricTextCoords = textureCoords[0] * bc_screen[0] + textureCoords[1] * bc_screen[1] +
+					textureCoords[2] * bc_screen[2];
+
+				TGAColor finalColor;
+				TGAColor texColor = getColorFromTextureMap(texture, baryCentricTextCoords);
+				/*if (intensity >= 0)
+				{
+					image.set(P.x, P.y, texColor * intensity);
+				}else*/
+				{
+					image.set(P.x, P.y, texColor/**intensity*/);
+				}
 			}
 		}
 	}
 }
 
-void loadModelAndDrawWireframe()
+TGAColor getColorFromTextureMap(TGAImage& texture, Vec3f texCoords)
 {
-	std::string arg = "resource/model/head.obj";
-
-	auto model = std::make_unique<Model>(Model(arg.c_str()));
-
-	TGAImage image(width, height, TGAImage::RGB);
-
-	const Vec3f lightDirection(0, 0, -1);
-
-	Vec3f normal;
-	float intensity = 0.0f;
-	for (int i = 0; i < model->numberOfFaces(); i++)
-	{
-		std::vector<int> face = model->face(i);
-
-		Vec2i scrCoords[3];
-		Vec3f worldCoords[3];
-		for (int j = 0; j < 3; j++)
-		{
-			worldCoords[j] = model->vert(face[j]);
-			scrCoords[j] = Vec2i((worldCoords[j].x + 1) * width / 2, (worldCoords[j].y + 1) * height / 2);
-		}
-		normal = cross(worldCoords[2] - worldCoords[0], worldCoords[1] - worldCoords[0]);
-
-		normal.normalize();
-
-		intensity = lightDirection.dot(normal);
-
-		if (intensity > 0)
-		{
-			triangle(scrCoords, image, TGAColor(intensity * 255, intensity * 255, intensity * 255));
-		}
-	}
-
-	image.flipVertically();
-	image.writeTGAFile("rasterized-lighted-face.tga");
+	int worldX = (texCoords.x) * texture.getWidth();
+	int worldY = (texCoords.y) * texture.getHeight();
+	return texture.get(worldX, worldY);
 }
 
-void rasterizeOneTriangle()
-{
-	TGAImage frame(200, 200, TGAImage::RGB);
-	Vec2i pts[3] = {Vec2i(10, 10), Vec2i(100, 30), Vec2i(190, 160)};
-
-
-	triangle(pts, frame, TGAColor(255, 0, 0));
-
-	frame.flipVertically();
-
-	frame.writeTGAFile("rasterized2.tga");
-}
 
 int main(int argc, char** argv)
 {
@@ -264,46 +165,56 @@ int main(int argc, char** argv)
 
 	for (int i = 0; i < width * height; i++)
 	{
-		zbuffer[i] = std::numeric_limits<float>::min();
+		zbuffer[i] = -std::numeric_limits<float>::max();
 	}
+
+	std::string modelPath("resource/model/head.obj");
+	std::string texturePath("resource/texture/head_diffuse.tga");
+
+	auto model = std::make_unique<Model>(modelPath.c_str());
 
 	TGAImage image(width, height, TGAImage::RGB);
 
-	std::string arg = "resource/model/head.obj";
+	TGAImage texture;
 
-	auto model = std::make_unique<Model>(Model(arg.c_str()));
+	if (!texture.readTGAFile(texturePath.c_str()))
+	{
+		std::cerr << "texture image could not be loaded: " << texturePath << std::endl;
 
-	Vec3f lightDir(0.0, 0.0, -1.0);
+		return -1;
+	}
 
-	Vec3f normal;
-	float intensity;
+	texture.flipVertically();
 
 	for (int i = 0; i < model->numberOfFaces(); i++)
 	{
-		std::vector<int> face = model->face(i);
+		std::vector<Vec3i> facesAndTextures = model->face(i);
 
-		Vec3f pts[3];
 		Vec3f worldCoords[3];
+		Vec3f textureCoords[3];
+		Vec3f screenCords[3];
+
+		Vec3f vertexNormals[3];
+
+		TGAColor colors[3];
+
 		for (int j = 0; j < 3; j++)
 		{
-			worldCoords[j] = model->vert(face[j]);
-			pts[j] = world2screen(worldCoords[j]);
+			worldCoords[j] = model->vert(facesAndTextures[j].x);
+
+			textureCoords[j] = model->texture(facesAndTextures[j].y);
+
+			vertexNormals[j] = model->normal(facesAndTextures[j].z);
+
+			screenCords[j] = world2screen(worldCoords[j]);
 		}
 
-		normal = cross(worldCoords[2] - worldCoords[0], worldCoords[1] - worldCoords[0]);
-
-		normal.normalize();
-
-		intensity = normal.dot(lightDir);
-
-		if(intensity>0)
-		{
-			triangleWithZBuffer(pts, zbuffer, image, TGAColor(intensity * 255, intensity * 255, intensity * 255, 255));
-		}
+		triangleWithZBuffer(screenCords, zbuffer, image, colors, vertexNormals, textureCoords, texture);
 	}
 
-	image.flipVertically(); // i want to have the origin at the left bottom corner of the image
-	image.writeTGAFile("zBuffered5.tga");
+	image.flipVertically();
+
+	image.writeTGAFile("texturedX2.tga");
 
 	return 0;
 }

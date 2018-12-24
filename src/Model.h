@@ -9,11 +9,20 @@ public:
 	
 	int numberOfVerts();
 	int numberOfFaces();
+	int numberOfTextures();
+	int numberOfNormals();
 
 	Vec3f vert(int);
-	std::vector<int> face(int index);
+
+	//keeps face and texture index: Vec2f(f,tIndex)
+	std::vector<Vec3i> face(int index);
+	Vec3f texture(int index);
+
+	Vec3f normal(int index);
 private:
 	std::vector<Vec3f> _verts;
-	std::vector<std::vector<int>> _faces;
+	std::vector<std::vector<Vec3i>> _faces;
+	std::vector<Vec3f> _textures;
+	std::vector<Vec3f> _normals;
 };
 
