@@ -63,6 +63,15 @@ struct TGAColor
 
 		return *this;
 	}
+
+	TGAColor operator*(float f)
+	{
+		this->r *= f;
+		this->g *= f;
+		this->b *= f;
+
+		return *this;
+	}
 };
 
 class TGAImage

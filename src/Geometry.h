@@ -109,7 +109,7 @@ template<class t>
 
 		inline Vec3<t> operator-(const Vec3<t> &v) const
 		{
-			return Vec3<t>(x - v.x, y - v.y, z - v.z);
+			return Vec3<t>(this->x - v.x, this->y - v.y, this->z - v.z);
 		}
 
 		inline Vec3<t> operator*(float f) const

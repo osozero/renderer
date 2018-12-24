@@ -56,9 +56,7 @@ Model::Model(const char* filename)
 		}
 	}
 
-	std::cerr << "# v# " << _verts.size() << " f# " << _verts.size() << std::endl;
-
-
+	std::cout << "# v# " << _verts.size() << " f# " << _faces.size() << std::endl;
 }
 
 int Model::numberOfVerts()
