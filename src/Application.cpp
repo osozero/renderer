@@ -298,12 +298,8 @@ int main(int argc, char** argv)
 
 		if(intensity>0)
 		{
-			
+			triangleWithZBuffer(pts, zbuffer, image, TGAColor(intensity * 255, intensity * 255, intensity * 255, 255));
 		}
-
-		triangleWithZBuffer(pts, zbuffer, image, TGAColor(intensity*255, intensity * 255, intensity * 255, 255));
-
-
 	}
 
 	image.flipVertically(); // i want to have the origin at the left bottom corner of the image
