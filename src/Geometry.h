@@ -23,10 +23,10 @@ template<class t>
 		t raw[2];
 	};
 
-	Vec2()
+	Vec2<t>()
 	: u(0),v(0)	{}
 
-	Vec2(t _u,t _v)
+	Vec2<t>(t _u,t _v)
 	: u(_u),v(_v) {}
 
 	inline Vec2<t> operator+(const Vec2<t> &vec) const
@@ -80,16 +80,21 @@ template<class t>
 			t raw[3];
 		};
 
-		Vec3()
+		Vec3<t>()
 			:x(0),y(0),z(0) {}
 
-		Vec3(t _x, t _y, t _z)
+		Vec3<t>(t _x, t _y, t _z)
 			:x(_x),y(_y),z(_z) {}
 
-		Vec3(Vec2<t> v2, t f)
+		Vec3<t>(Vec2<t> v2, t f)
 			:x(v2.x), y(v2.y), z(f){}
 
-		inline Vec3<t> cross(const Vec3<t> &v) const
+		template <class u> Vec3<t>(const Vec3<u>& v);
+
+			inline Vec3<t>(const Vec3<t> &v) : x(t()), y(t()), z(t()) { *this = v; }
+
+
+			inline Vec3<t> cross(const Vec3<t> &v) const
 		{
 			return Vec3<t>(
 					y*v.z - v.y*z,
@@ -152,6 +157,7 @@ template<class t>
 		template<class > friend std::ostream& operator<<(std::ostream &os, Vec3<t> v);
 	};
 
+
 template <class>
 std::ostream& operator<<(std::ostream& os, Vec2<float> vec)
 {
@@ -171,6 +177,14 @@ template<class t>
 {
 	return Vec3<t>(v1.y * v2.z - v1.z*v2.y, -(v1.x*v2.z - v2.x*v1.z), v1.x*v2.y - v2.x*v1.y);
 }
+
+  template <> template <>
+  inline Vec3<int>::Vec3(const Vec3<float> &v)
+	 : x(int(v.x + .5)), y(int(v.y + .5)), z(int(v.z + .5)) {}
+
+  template <> template <>
+  inline Vec3<float>::Vec3(const Vec3<int> &v)
+	 : x(v.x), y(v.y), z(v.z) {}
 
 	typedef Vec2<float> Vec2f;
 	typedef Vec2<int> Vec2i;

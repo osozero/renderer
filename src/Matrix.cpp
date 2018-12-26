@@ -1,5 +1,6 @@
 #include "Matrix.h"
 #include <iostream>
+#include <cassert>
 
 Matrix::Matrix(int r, int c)
 	:m(std::vector<std::vector<float>>(r,std::vector<float>(c,0.0f))),
@@ -9,14 +10,14 @@ Matrix::Matrix(int r, int c)
 
 Matrix Matrix::identity(int dimensions)
 {
-	Matrix i(dimensions, dimensions);
+	Matrix im(dimensions, dimensions);
 
-	for(int j=0;j<dimensions;j++)
-	{
-		i[j][j] = 1;
+	for (int i = 0; i < dimensions; i++) {
+		for (int j = 0; j < dimensions; j++) {
+			im[i][j] = (i == j ? 1.f : 0.f);
+		}
 	}
-
-	return i;
+	return im;
 }
 
 std::vector<float>& Matrix::operator[](const int i)
@@ -29,30 +30,19 @@ std::vector<float> Matrix::operator[](const int i) const
 	return m[i];
 }
 
-Matrix Matrix::operator*(const Matrix& m)
+Matrix Matrix::operator*(const Matrix& a)
 {
-	if(this->cols!=m.rows)
-	{
-		return *this;
-	}
-
-	Matrix r(this->rows, m.cols);
-	float sum;
-	for(int i=0;i<this->rows;i++)
-	{
-		sum = 0.0f;
-		for(int j=0;j<m.cols;j++)
-		{
-			for(auto c=0;c<((*this)[i].size());c++)
-			{
-				sum += (*this)[i][c] * m[j][c];
+	assert(cols == a.rows);
+	Matrix result(rows, a.cols);
+	for (int i = 0; i < rows; i++) {
+		for (int j = 0; j < a.cols; j++) {
+			result.m[i][j] = 0.f;
+			for (int k = 0; k < cols; k++) {
+				result.m[i][j] += m[i][k] * a.m[k][j];
 			}
-
-			r[i][j] = sum;
 		}
 	}
-
-	return r;
+	return result;
 }
 
 Matrix Matrix::transpose()

@@ -5,25 +5,28 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include "Matrix.h"
 
 const TGAColor white(255, 255, 255, 255);
 const TGAColor red(255, 0, 0, 255);
 const TGAColor green(0, 255, 0, 255);
 
+Vec3f camera(0, 0,3);
+
 float intensity;
 
 const int width = 800;
 const int height = 800;
+const int depth = 255;
 
-void triangleWithZBuffer(Vec3f* pts, float* zbuffer, TGAImage& image, TGAColor* color, Vec3f* vertexNormals,
-                         Vec3f* textureCoords, TGAImage& texture);
+TGAColor getColorFromTextureMap(TGAImage& texture, Vec3f texCoords);
+
+void triangle(Vec3i t0, Vec3i t1, Vec3i t2, Vec3f* textureCoords, TGAImage &image, TGAImage& texture,float intensity, int *zbuffer);
 
 Vec3f world2screen(Vec3f v)
 {
 	return Vec3f(int((v.x + 1.) * width / 2. + .5), int((v.y + 1.) * height / 2. + .5), v.z);
 }
-
-TGAColor getColorFromTextureMap(TGAImage& texture, Vec3f texCoords);
 
 Vec3f barycentric(Vec3f A, Vec3f B, Vec3f C, Vec3f P)
 {
@@ -86,7 +89,7 @@ void line(Vec2i v1, Vec2i v2, TGAImage& image, const TGAColor& color)
 	}
 }
 
-void triangleWithZBuffer(Vec3f* pts, float* zbuffer, TGAImage& image, TGAColor* color, Vec3f* vertexNormals,
+void render(Vec3f* pts, float* zbuffer, TGAImage& image, TGAColor* color, Vec3f* vertexNormals,
                          Vec3f* textureCoords, TGAImage& texture)
 {
 	Vec2f bboxmin(std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
@@ -105,7 +108,7 @@ void triangleWithZBuffer(Vec3f* pts, float* zbuffer, TGAImage& image, TGAColor* 
 	}
 
 	Vec3f P;
-	Vec3f light(0, 0, -1);
+	Vec3f light(0.0, 0.0, -1.0);
 	for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++)
 	{
 		for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++)
@@ -126,26 +129,15 @@ void triangleWithZBuffer(Vec3f* pts, float* zbuffer, TGAImage& image, TGAColor* 
 			{
 				zbuffer[int(P.x + P.y * width)] = P.z;
 
-				Vec3f normal = vertexNormals[0] * bc_screen[0] +
-					vertexNormals[1] * bc_screen[1] +
-					vertexNormals[2] * bc_screen[2];
-
-				normal.normalize();
-				light.normalize();
-				float intensity = normal.dot(light);
-
 				auto baryCentricTextCoords = textureCoords[0] * bc_screen[0] + textureCoords[1] * bc_screen[1] +
 					textureCoords[2] * bc_screen[2];
 
 				TGAColor finalColor;
 				TGAColor texColor = getColorFromTextureMap(texture, baryCentricTextCoords);
-				/*if (intensity >= 0)
+				if(intensity>0)
 				{
-					image.set(P.x, P.y, texColor * intensity);
-				}else*/
-				{
-					image.set(P.x, P.y, texColor/**intensity*/);
-				}
+					image.set(P.x, P.y, texColor *intensity);
+				}								
 			}
 		}
 	}
@@ -159,14 +151,105 @@ TGAColor getColorFromTextureMap(TGAImage& texture, Vec3f texCoords)
 }
 
 
+//executes without barycentric coordinates
+void triangle(Vec3i t0, Vec3i t1, Vec3i t2, Vec3f* textureCoords, TGAImage& image, TGAImage& texture, float intensity,
+	int* zbuffer)
+{
+	if (t0.y == t1.y && t0.y == t2.y) return;
+
+	if (t0.y > t1.y) { std::swap(t0, t1); std::swap(textureCoords[0], textureCoords[1]); }
+	if (t0.y > t2.y) { std::swap(t0, t2); std::swap(textureCoords[0], textureCoords[2]); }
+	if (t1.y > t2.y) { std::swap(t1, t2); std::swap(textureCoords[1], textureCoords[2]); }
+
+	auto totalHeight = t2.y - t0.y;
+
+	for(int i=0;i<totalHeight;i++)
+	{
+		bool secondHalf = i > t1.y - t0.y || t1.y == t0.y;
+
+		int segmentHeight = secondHalf ? t2.y - t1.y : t1.y - t0.y;
+
+		float alpha = (float)i / totalHeight;
+
+		float beta = (float)(i - (secondHalf ? t1.y - t0.y : 0)) / segmentHeight;
+
+		auto A = t0 + Vec3f(t2 - t0)*alpha;
+		auto B = secondHalf ? t1 + Vec3f(t2 - t1)*beta : t0 + Vec3f(t1 - t0)*beta;
+
+		auto uvA = textureCoords[0] + (textureCoords[2] - textureCoords[0])*alpha;
+
+		auto uvB = secondHalf ? textureCoords[1] + (textureCoords[2] - textureCoords[0])*beta : textureCoords[0] + (textureCoords[1] - textureCoords[0])*beta;
+
+		if(A.x>B.x)
+		{
+			std::swap(A, B);
+			std::swap(uvA, uvB);
+		}
+
+		for(int j=A.x;j<=B.x;j++)
+		{
+			float phi = B.x == A.x ? 1. : static_cast<float>(j - A.x) / static_cast<float>(B.x - A.x);
+
+			Vec3i   P = Vec3f(A) + Vec3f(B - A)*phi;
+
+			Vec3f uvP = uvA + (uvB - uvA)*phi;
+		
+			int idx = P.x + P.y*width;
+
+			if(zbuffer[idx]<P.z)
+			{
+				zbuffer[idx] = P.z;
+				auto color = getColorFromTextureMap(texture, uvP);
+				image.set(P.x, P.y, color*intensity);
+			}
+		}
+
+
+	}
+}
+
+Matrix makeViewPort(int x,int y, int w,int h)
+{
+	Matrix m = Matrix::identity(4);
+	m[0][3] = x + w / 2.f;
+	m[1][3] = y + h / 2.f;
+	m[2][3] = depth / 2.f;
+
+	m[0][0] = w / 2.f;
+	m[1][1] = h / 2.f;
+	m[2][2] = depth / 2.f;
+	return m;
+}
+
+Matrix vector2Matrix(Vec3f v)
+{
+	Matrix m(4, 1);
+	m[0][0] = v.x;
+	m[1][0] = v.y;
+	m[2][0] = v.z;
+	m[3][0] = 1.f;
+	return m;
+}
+
+Vec3f matrix2Vector(Matrix m)
+{
+	return Vec3f(m[0][0] / m[3][0], m[1][0] / m[3][0], m[2][0] / m[3][0]);
+}
+
 int main(int argc, char** argv)
 {
-	float* zbuffer = new float[width * height];
+	int* zbuffer = new int[width * height];
 
 	for (int i = 0; i < width * height; i++)
 	{
-		zbuffer[i] = -std::numeric_limits<float>::max();
+		zbuffer[i] = std::numeric_limits<int>::min();
 	}
+
+	Matrix projection = Matrix::identity(4);
+
+	Matrix viewPort = makeViewPort(width / 8, height / 8, width * 3 / 4, height * 3 / 4);
+
+	projection[3][2] = -1.f / camera.z;
 
 	std::string modelPath("resource/model/head.obj");
 	std::string texturePath("resource/texture/head_diffuse.tga");
@@ -196,8 +279,6 @@ int main(int argc, char** argv)
 
 		Vec3f vertexNormals[3];
 
-		TGAColor colors[3];
-
 		for (int j = 0; j < 3; j++)
 		{
 			worldCoords[j] = model->vert(facesAndTextures[j].x);
@@ -206,15 +287,33 @@ int main(int argc, char** argv)
 
 			vertexNormals[j] = model->normal(facesAndTextures[j].z);
 
-			screenCords[j] = world2screen(worldCoords[j]);
+			screenCords[j] = matrix2Vector((viewPort*projection)*vector2Matrix(worldCoords[j]));
+
 		}
 
-		triangleWithZBuffer(screenCords, zbuffer, image, colors, vertexNormals, textureCoords, texture);
+		Vec3f lDir(0.0, 0.0, -1.0);
+		Vec3f normal = cross(worldCoords[2] - worldCoords[0], worldCoords[1] - worldCoords[0]);
+
+		normal.normalize();
+
+		intensity = normal.dot(lDir);
+
+		if(intensity>0)
+		{
+			Vec3f t0 = screenCords[0];
+			Vec3f t1 = screenCords[1];
+			Vec3f t2 = screenCords[2];
+
+			triangle(t0, t1, t2, textureCoords, image, texture, intensity, zbuffer);
+		}
+
+		
 	}
 
 	image.flipVertically();
 
-	image.writeTGAFile("texturedX2.tga");
+	image.writeTGAFile("projection5.tga");
 
+	delete[] zbuffer;
 	return 0;
 }
