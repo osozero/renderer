@@ -11,7 +11,9 @@ const TGAColor white(255, 255, 255, 255);
 const TGAColor red(255, 0, 0, 255);
 const TGAColor green(0, 255, 0, 255);
 
-Vec3f camera(0, 0,3);
+Vec3f eye(1,1,3);
+Vec3f center(0, 0, 0);
+Vec3f lightDir(1, -1, 1);
 
 float intensity;
 
