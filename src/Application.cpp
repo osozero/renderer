@@ -231,6 +231,27 @@ Matrix vector2Matrix(Vec3f v)
 	return m;
 }
 
+
+Matrix lookAt(Vec3f eye,Vec3f center, Vec3f up)
+{
+	Vec3f z = (eye - center).normalize();
+	Vec3f x = cross(up, z).normalize();
+	Vec3f y = cross(z,x).normalize();
+
+	Matrix result = Matrix::identity(4);
+
+	for(int i=0;i<3;i++)
+	{
+		result[0][i] = x[i];
+		result[1][i] = y[i];
+		result[2][i] = z[i];
+
+		result[i][3] = -center[i];
+	}
+
+	return result;
+}
+
 Vec3f matrix2Vector(Matrix m)
 {
 	return Vec3f(m[0][0] / m[3][0], m[1][0] / m[3][0], m[2][0] / m[3][0]);
