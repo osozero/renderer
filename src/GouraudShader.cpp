@@ -7,6 +7,8 @@
 Vec4f GouraudShader::vertex(int iface, int nthVert)
 {
 	Vec4f glVertex = Vec4f(model.vert(iface, nthVert),1.0f);
+	textureCoords[nthVert] = model.texture(iface, nthVert);
+	
 	Matrix glVertexM4(4, 1);
 
 	for(int i=0;i<4;i++)
@@ -30,7 +32,22 @@ bool GouraudShader::fragment(Vec3f bar, TGAColor& color)
 {
 	float intensity = varyingIntensity.dot(bar);
 
-	color = TGAColor(255, 255, 255)*intensity;
+	Vec3f interpolatedTexCoords(0,0,0);
+	float temp;
+	for(int i=0;i<3;i++)
+	{
+		temp = 0;
+		for(int j=0;j<3;j++)
+		{
+			temp += textureCoords[j][i] * bar[j];
+		}
+
+		interpolatedTexCoords[i] = temp;
+	}
+
+		
+	color = texture.getColorFromTexCoord(interpolatedTexCoords);
+	color = color*intensity;
 
 	return false;
 }

@@ -40,7 +40,6 @@ int main(int argc, char** argv)
 	TGAImage zbuffer(width, height, TGAImage::GRAYSCALE);
 
 	TGAImage texture;
-
 	if (!texture.readTGAFile(texturePath.c_str()))
 	{
 		std::cerr << "texture image could not be loaded: " << texturePath << std::endl;
@@ -50,7 +49,10 @@ int main(int argc, char** argv)
 
 	texture.flipVertically();
 
-	GouraudShader gouraudShader(*model, renderer.viewport, renderer.projection, renderer.modelview, lightDirection);
+	Texture tex(texture, *model);
+
+
+	GouraudShader gouraudShader(*model, tex,renderer.viewport, renderer.projection, renderer.modelview, lightDirection);
 
 
 	for (int i = 0; i < model->numberOfFaces(); i++)
@@ -66,6 +68,6 @@ int main(int argc, char** argv)
 
 	image.flipVertically();
 
-	image.writeTGAFile("gouraudShader3.tga");
+	image.writeTGAFile("GouraudShaderTextured.tga");
 	return 0;
 }

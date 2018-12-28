@@ -1,6 +1,7 @@
 #pragma once
 #include "Geometry.h"
 #include <vector>
+#include "TGAImage.h"
 
 class Model
 {
@@ -19,6 +20,7 @@ public:
 	//keeps face and texture index: Vec2f(f,tIndex)
 	std::vector<Vec3i> face(int index);
 	Vec3f texture(int index);
+	Vec3f texture(int face, int nthVert);
 
 	Vec3f normal(int index);
 	Vec3f normal(int face, int nthVert);

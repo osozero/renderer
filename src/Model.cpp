@@ -127,6 +127,11 @@ Vec3f Model::texture(int index)
 	return _textures.at(index);
 }
 
+Vec3f Model::texture(int face, int nthVert)
+{
+	return _textures[_faces.at(face).at(nthVert)[1]];
+}
+
 Vec3f Model::normal(int index)
 {
 	return _normals.at(index);

@@ -124,6 +124,16 @@ template<class t>
 			return Vec3<t>(x*f, y *f, z *f);
 		}
 
+		inline Vec3<t> operator*=(Vec3<t> &v)
+		{
+			Vec3<t> r;
+			r.x = this->x * v.x;
+			r.y = this->y * v.y;
+			r.z = this->z * v.z;
+
+			return r;
+		}
+
 		inline Vec3<t> operator/(float f)
 		{
 			this->x/= f;
