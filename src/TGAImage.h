@@ -30,7 +30,7 @@ struct TGAColor
 			unsigned char b, g, r, a;
 		};
 		unsigned char raw[4];
-		unsigned val;
+		unsigned int val;
 	};
 
 	int bytesPp;
@@ -41,7 +41,7 @@ struct TGAColor
 	TGAColor(unsigned char R,unsigned char G, unsigned char B, unsigned char A=255)
 		:r(R),g(G),b(B),a(A){}
 
-	TGAColor(int v, int bpp)
+	TGAColor(int v, int bpp=3)
 		:val(v),bytesPp(bpp){}
 
 	TGAColor(const TGAColor &tc)
@@ -94,6 +94,11 @@ struct TGAColor
 		this->b *= f;
 
 		return *this;
+	}
+
+	int operator[](int i)
+	{
+		return raw[i];
 	}
 };
 

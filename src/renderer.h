@@ -7,7 +7,6 @@
 class TGAImage;
 
 class renderer
-	: public IShader
 {
 public:
 	Matrix  modelview;
@@ -23,12 +22,12 @@ public:
 
 	void lookAt(Vec3f eye, Vec3f center, Vec3f up);
 
-	void triangle(Vec4f *pts, TGAImage &image, TGAImage &zbuffer);
-
-	Vec4f vertex(int iface, int nthVert) override;
-	bool fragment(Vec3f bar, TGAColor& color) override;
+	void triangle(Vec4f *pts, IShader &shader,TGAImage &image, TGAImage &zbuffer);
 
 	~renderer();
+
+private:
+	Vec3f barycentric(Vec2f A, Vec2f B, Vec2f C, Vec2f P);
 	
 };
 

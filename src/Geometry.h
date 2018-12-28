@@ -30,6 +30,7 @@ template<class t>
 	Vec2<t>(t _u,t _v)
 	: u(_u),v(_v) {}
 
+
 	inline Vec2<t> operator+(const Vec2<t> &vec) const
 	{
 		return Vec2<t>(u + vec.u, v + vec.v);
@@ -179,6 +180,41 @@ template<class t>
 
 		Vec4<t>(t _x, t _y, t _z,t _w)
 			: x(_x), y(_y), z(_z),w(_w) {}
+
+
+		inline t& operator[](int i)
+		{
+			return raw[i];
+		}
+
+		inline t operator[](int i) const
+		{
+			return raw[i];
+		}
+
+		inline Vec4<t> operator+(const Vec4<t> &v) const
+		{
+			return Vec4<t>(x + v.x, y + v.y, z + v.z,w);
+		}
+
+		inline Vec4<t> operator-(const Vec4<t> &v) const
+		{
+			return Vec4<t>(this->x - v.x, this->y - v.y, this->z - v.z,w);
+		}
+
+		inline Vec4<t> operator*(float f) const
+		{
+			return Vec4<t>(x*f, y *f, z *f,w);
+		}
+
+		inline Vec4<t> operator/(float f)
+		{
+			this->x /= f;
+			this->y /= f;
+			this->z /= f;
+
+			return *this;
+		}
 
 };
 
