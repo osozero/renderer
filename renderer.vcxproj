@@ -115,6 +115,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\GouraudShader.cpp" />
     <ClCompile Include="src\renderer.cpp" />
     <ClCompile Include="src\Matrix.cpp" />
     <ClCompile Include="src\Model.cpp" />
@@ -122,6 +123,7 @@
     <ClCompile Include="src\TGAImage.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\GouraudShader.h" />
     <ClInclude Include="src\IShader.h" />
     <ClInclude Include="src\renderer.h" />
     <ClInclude Include="src\Matrix.h" />

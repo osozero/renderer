@@ -14,11 +14,14 @@ public:
 
 	Vec3f vert(int);
 
+	Vec3f vert(int face, int nthVert);
+
 	//keeps face and texture index: Vec2f(f,tIndex)
 	std::vector<Vec3i> face(int index);
 	Vec3f texture(int index);
 
 	Vec3f normal(int index);
+	Vec3f normal(int face, int nthVert);
 private:
 	std::vector<Vec3f> _verts;
 	std::vector<std::vector<Vec3i>> _faces;

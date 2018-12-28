@@ -69,6 +69,9 @@ struct TGAColor
 		return TGAColor(this->r*f, this->g*f, this->b*f);
 	}
 
+	
+
+
 	TGAColor operator+(const TGAColor &tc)
 	{
 		this->r += tc.r;

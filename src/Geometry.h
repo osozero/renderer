@@ -181,6 +181,9 @@ template<class t>
 		Vec4<t>(t _x, t _y, t _z,t _w)
 			: x(_x), y(_y), z(_z),w(_w) {}
 
+		Vec4<t>(Vec3<t> v,t _w)
+			:x(v.x),y(v.y),z(v.z),w(_w){}
+
 
 		inline t& operator[](int i)
 		{
@@ -209,11 +212,12 @@ template<class t>
 
 		inline Vec4<t> operator/(float f)
 		{
-			this->x /= f;
-			this->y /= f;
-			this->z /= f;
+			Vec4<t> v;
+			v.x = this->x / f;
+			v.y = this->y / f;
+			v.z = this->z / f;
 
-			return *this;
+			return v;
 		}
 
 };

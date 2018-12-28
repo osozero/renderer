@@ -112,6 +112,11 @@ Vec3f Model::vert(int i)
 	return _verts.at(i);
 }
 
+Vec3f Model::vert(int face, int nthVert)
+{
+	return _verts[_faces[face][nthVert][0]];
+}
+
 std::vector<Vec3i> Model::face(int index)
 {
 	return _faces.at(index);
@@ -125,4 +130,9 @@ Vec3f Model::texture(int index)
 Vec3f Model::normal(int index)
 {
 	return _normals.at(index);
+}
+
+Vec3f Model::normal(int face, int nthVert)
+{
+	return _normals[_faces.at(face).at(nthVert)[2]];
 }

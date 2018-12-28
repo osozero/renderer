@@ -6,14 +6,14 @@
 
 class TGAImage;
 
-class renderer
+class Renderer
 {
 public:
 	Matrix  modelview;
 	Matrix viewport;
 	Matrix projection;
 	
-	renderer();
+	Renderer();
 
 	void setViewport(int x, int y, int w, int h_i);
 
@@ -24,7 +24,7 @@ public:
 
 	void triangle(Vec4f *pts, IShader &shader,TGAImage &image, TGAImage &zbuffer);
 
-	~renderer();
+	~Renderer();
 
 private:
 	Vec3f barycentric(Vec2f A, Vec2f B, Vec2f C, Vec2f P);
