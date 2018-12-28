@@ -115,12 +115,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\renderer.cpp" />
     <ClCompile Include="src\Matrix.cpp" />
     <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\TGAImage.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\IShader.h" />
+    <ClInclude Include="src\renderer.h" />
     <ClInclude Include="src\Matrix.h" />
     <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\Geometry.h" />

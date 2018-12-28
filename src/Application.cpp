@@ -210,6 +210,50 @@ void triangle(Vec3i t0, Vec3i t1, Vec3i t2, Vec3f* textureCoords, TGAImage& imag
 	}
 }
 
+
+void triangleWithVertexNormals(Vec3i t0, Vec3i t1, Vec3i t2, float ity0, float ity1, float ity2, TGAImage &image, int *zbuffer)
+{
+	if (t0.y == t1.y && t0.y == t2.y) return;
+
+	if (t0.y > t1.y) { std::swap(t0, t1); std::swap(ity0, ity1); }
+	if (t0.y > t2.y) { std::swap(t0, t2); std::swap(ity0, ity2); }
+	if (t1.y > t2.y) { std::swap(t1, t2); std::swap(ity1, ity2); }
+
+	int totalHeight = t2.y - t0.y;
+	for (int i = 0; i < totalHeight; i++) {
+		bool secondHalf = i > t1.y - t0.y || t1.y == t0.y;
+		int segmentHeight = secondHalf ? t2.y - t1.y : t1.y - t0.y;
+		float alpha = (float)i / totalHeight;
+		float beta = (float)(i - (secondHalf ? t1.y - t0.y : 0)) / segmentHeight; 
+		
+		Vec3i A = t0 + Vec3f(t2 - t0)*alpha;
+		
+		Vec3i B = secondHalf ? t1 + Vec3f(t2 - t1)*beta : t0 + Vec3f(t1 - t0)*beta;
+		
+		float ityA = ity0 + (ity2 - ity0)*alpha;
+		
+		float ityB = secondHalf ? ity1 + (ity2 - ity1)*beta : ity0 + (ity1 - ity0)*beta;
+		if (A.x > B.x) { std::swap(A, B); std::swap(ityA, ityB); }
+		
+		for (int j = A.x; j <= B.x; j++) {
+			float phi = B.x == A.x ? 1. : (float)(j - A.x) / (B.x - A.x);
+			
+			Vec3i    P = Vec3f(A) + Vec3f(B - A)*phi;
+			
+			float ityP = ityA + (ityB - ityA)*phi;
+			
+			int idx = P.x + P.y*width;
+			
+			if (P.x >= width || P.y >= height || P.x < 0 || P.y < 0) continue;
+			
+			if (zbuffer[idx] < P.z) {
+				zbuffer[idx] = P.z;
+				image.set(P.x, P.y, TGAColor(255, 255, 255)*ityP);
+			}
+		}
+	}
+}
+
 Matrix makeViewPort(int x,int y, int w,int h)
 {
 	Matrix m = Matrix::identity(4);
@@ -233,25 +277,19 @@ Matrix vector2Matrix(Vec3f v)
 	return m;
 }
 
-
 Matrix lookAt(Vec3f eye,Vec3f center, Vec3f up)
 {
 	Vec3f z = (eye - center).normalize();
-	Vec3f x = cross(up, z).normalize();
+	Vec3f x = cross(up,z).normalize();
 	Vec3f y = cross(z,x).normalize();
-
-	Matrix result = Matrix::identity(4);
-
-	for(int i=0;i<3;i++)
-	{
-		result[0][i] = x[i];
-		result[1][i] = y[i];
-		result[2][i] = z[i];
-
-		result[i][3] = -center[i];
+	Matrix res = Matrix::identity(4);
+	for (int i = 0; i < 3; i++) {
+		res[0][i] = x[i];
+		res[1][i] = y[i];
+		res[2][i] = z[i];
+		res[i][3] = -center[i];
 	}
-
-	return result;
+	return res;
 }
 
 Vec3f matrix2Vector(Matrix m)
@@ -263,16 +301,28 @@ int main(int argc, char** argv)
 {
 	int* zbuffer = new int[width * height];
 
+	lightDir.normalize();
+
+
 	for (int i = 0; i < width * height; i++)
 	{
 		zbuffer[i] = std::numeric_limits<int>::min();
 	}
 
+
+	Matrix modelView = lookAt(eye, center,Vec3f(0.0, 1.0f, 0.0));
+
 	Matrix projection = Matrix::identity(4);
 
 	Matrix viewPort = makeViewPort(width / 8, height / 8, width * 3 / 4, height * 3 / 4);
 
-	projection[3][2] = -1.f / camera.z;
+	projection[3][2] = -1.0f / (eye-center).length();
+
+	std::cerr << modelView << std::endl;
+	std::cerr << projection << std::endl;
+	std::cerr << viewPort << std::endl;
+	Matrix z = (viewPort*projection*modelView);
+	std::cerr << z << std::endl;
 
 	std::string modelPath("resource/model/head.obj");
 	std::string texturePath("resource/texture/head_diffuse.tga");
@@ -302,6 +352,8 @@ int main(int argc, char** argv)
 
 		Vec3f vertexNormals[3];
 
+		float intensity[3];
+
 		for (int j = 0; j < 3; j++)
 		{
 			worldCoords[j] = model->vert(facesAndTextures[j].x);
@@ -310,32 +362,21 @@ int main(int argc, char** argv)
 
 			vertexNormals[j] = model->normal(facesAndTextures[j].z);
 
-			screenCords[j] = matrix2Vector((viewPort*projection)*vector2Matrix(worldCoords[j]));
+			auto temp = (viewPort*projection*modelView*Matrix(worldCoords[j]));
 
+			screenCords[j].x = temp[0].at(0);
+			screenCords[j].y = temp[1].at(0);
+			screenCords[j].z = temp[2].at(0);
+			
+			intensity[j] = vertexNormals[j].dot(lightDir);
 		}
 
-		Vec3f lDir(0.0, 0.0, -1.0);
-		Vec3f normal = cross(worldCoords[2] - worldCoords[0], worldCoords[1] - worldCoords[0]);
-
-		normal.normalize();
-
-		intensity = normal.dot(lDir);
-
-		if(intensity>0)
-		{
-			Vec3f t0 = screenCords[0];
-			Vec3f t1 = screenCords[1];
-			Vec3f t2 = screenCords[2];
-
-			triangle(t0, t1, t2, textureCoords, image, texture, intensity, zbuffer);
-		}
-
-		
+		triangleWithVertexNormals(screenCords[0], screenCords[1], screenCords[2], intensity[0], intensity[1], intensity[2], image, zbuffer);
 	}
 
 	image.flipVertically();
 
-	image.writeTGAFile("projection5.tga");
+	image.writeTGAFile("camera.tga");
 
 	delete[] zbuffer;
 	return 0;

@@ -3,6 +3,7 @@
 #include<cmath>
 #include <ostream>
 
+
 template<class t>
 	struct Vec2
 {
@@ -88,7 +89,7 @@ template<class t>
 
 		Vec3<t>(Vec2<t> v2, t f)
 			:x(v2.x), y(v2.y), z(f){}
-
+	
 		template <class u> Vec3<t>(const Vec3<u>& v);
 
 			inline Vec3<t>(const Vec3<t> &v) : x(t()), y(t()), z(t()) { *this = v; }
@@ -155,7 +156,8 @@ template<class t>
 		}
 
 		template<class > friend std::ostream& operator<<(std::ostream &os, Vec3<t> v);
-	};
+			
+		};
 
 
 template <class>
@@ -185,6 +187,7 @@ template<class t>
   template <> template <>
   inline Vec3<float>::Vec3(const Vec3<int> &v)
 	 : x(v.x), y(v.y), z(v.z) {}
+
 
 	typedef Vec2<float> Vec2f;
 	typedef Vec2<int> Vec2i;
