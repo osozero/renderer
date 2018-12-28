@@ -159,6 +159,29 @@ template<class t>
 			
 		};
 
+template<class t>
+	struct Vec4
+{
+		union
+		{
+			struct
+			{
+				t x;
+				t y;
+				t z;
+				t w;
+			};
+			t raw[4];
+		};
+
+		Vec4<t>()
+			: x(0), y(0), z(0),w(0) {}
+
+		Vec4<t>(t _x, t _y, t _z,t _w)
+			: x(_x), y(_y), z(_z),w(_w) {}
+
+};
+
 
 template <class>
 std::ostream& operator<<(std::ostream& os, Vec2<float> vec)
@@ -193,3 +216,6 @@ template<class t>
 	typedef Vec2<int> Vec2i;
 	typedef Vec3<float> Vec3f;
 	typedef Vec3<int> Vec3i;
+
+	typedef Vec4<float> Vec4f;
+	typedef Vec4<int> Vec4i;
