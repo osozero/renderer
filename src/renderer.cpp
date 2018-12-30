@@ -3,6 +3,9 @@
 
 
 Renderer::Renderer()
+	:vPort(1.0f),
+	proj(1.0f),
+	mView(1.0f)
 {
 }
 
@@ -16,6 +19,15 @@ void Renderer::setViewport(int x, int y, int w, int h)
 	viewport[0][0] = w / 2.f;
 	viewport[1][1] = h / 2.f;
 	viewport[2][2] = 255.f / 2.f;
+
+	
+	vPort[0][3] = viewport[0][3];
+	vPort[1][3] = viewport[1][3];
+	vPort[2][3] = viewport[2][3];
+
+	vPort[0][0] = viewport[0][0];
+	vPort[1][1] = viewport[1][1];
+	vPort[2][2] = viewport[2][2];
 }
 
 void Renderer::setProjection(float coeff)
@@ -23,6 +35,9 @@ void Renderer::setProjection(float coeff)
 	projection = Matrix::identity(4);
 
 	projection[3][2] = coeff;
+
+	proj[3][2] = coeff;
+	
 }
 
 void Renderer::lookAt(Vec3f eye, Vec3f center, Vec3f up)
@@ -36,6 +51,12 @@ void Renderer::lookAt(Vec3f eye, Vec3f center, Vec3f up)
 		modelview[1][i] = y[i];
 		modelview[2][i] = z[i];
 		modelview[i][3] = -center[i];
+
+
+		mView[0][i] = x[i];
+		mView[1][i] = y[i];
+		mView[2][i] = z[i];
+		mView[i][3] = -center[i];
 	}
 }
 

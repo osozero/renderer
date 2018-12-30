@@ -15,7 +15,8 @@ Vec4f GouraudShader::vertex(int iface, int nthVert)
 	{
 		glVertexM4[i][0] = glVertex[i];
 	}
-	
+
+	auto mresult = viewport * proj*modelview;
 	auto transResult = viewport * proj*modelview*glVertexM4;
 	for(int i=0;i<4;i++)
 	{

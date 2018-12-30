@@ -20,6 +20,7 @@ public:
 	{}
 
 	TGAColor getColorFromTexCoord(Vec3f coords);
+	Vec3f getNormalFromTexCoord(Vec3f coords);
 	~Texture();
 };
 

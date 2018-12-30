@@ -2,6 +2,7 @@
 #include "Matrix.h"
 #include "IShader.h"
 #include "TGAImage.h"
+#include <glm/mat4x4.hpp>
 
 
 class TGAImage;
@@ -12,11 +13,14 @@ public:
 	Matrix  modelview;
 	Matrix viewport;
 	Matrix projection;
-	
+
+	glm::mat4 mView;
+	glm::mat4 vPort;
+	glm::mat4 proj;
+
 	Renderer();
 
 	void setViewport(int x, int y, int w, int h_i);
-
 	//coeff = -1/c
 	void setProjection(float coeff = 0);
 
