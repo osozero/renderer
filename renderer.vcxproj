@@ -116,6 +116,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\GouraudShaderSpecularMapping.cpp" />
     <ClCompile Include="src\GouraudShaderNormalMapping.cpp" />
     <ClCompile Include="src\GouraudShader.cpp" />
     <ClCompile Include="src\renderer.cpp" />
@@ -126,6 +127,7 @@
     <ClCompile Include="src\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\GouraudShaderSpecularMapping.h" />
     <ClInclude Include="src\GouraudShaderNormalMapping.h" />
     <ClInclude Include="src\GouraudShader.h" />
     <ClInclude Include="src\IShader.h" />

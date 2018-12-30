@@ -99,7 +99,12 @@ struct TGAColor
 		return *this;
 	}
 
-	int operator[](int i)
+	int operator[](int i) const
+	{
+		return raw[i];
+	}
+
+	unsigned char& operator[](int i)
 	{
 		return raw[i];
 	}

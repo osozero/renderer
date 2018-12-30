@@ -22,6 +22,11 @@ Vec3f Texture::getNormalFromTexCoord(Vec3f coords)
 	return normal;
 }
 
+float Texture::getSpecularFromTexCoords(Vec3f coords)
+{
+	return image.get(coords.x*width, coords.y*height)[0];
+}
+
 Texture::~Texture()
 {
 }

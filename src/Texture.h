@@ -21,6 +21,7 @@ public:
 
 	TGAColor getColorFromTexCoord(Vec3f coords);
 	Vec3f getNormalFromTexCoord(Vec3f coords);
+	float getSpecularFromTexCoords(Vec3f coords);
 	~Texture();
 };
 
