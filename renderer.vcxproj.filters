@@ -42,6 +42,9 @@
     <ClCompile Include="src\GouraudShaderSpecularMapping.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\PhongShaderTangentSpace.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\TGAImage.h">
@@ -72,6 +75,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\GouraudShaderSpecularMapping.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PhongShaderTangentSpace.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
