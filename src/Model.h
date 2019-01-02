@@ -2,6 +2,7 @@
 #include "Geometry.h"
 #include <vector>
 #include "TGAImage.h"
+#include <glm/vec4.hpp>
 
 class Model
 {
