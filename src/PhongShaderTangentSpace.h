@@ -23,7 +23,7 @@ public:
 	glm::mat4 uniformProjectionModelview;// projection*modelview;
 	glm::mat4 uniformProjModelviewInvertTranspose;// (projection*modelview) * invert_transpose;
 
-	glm::vec4 lightDirection;
+	glm::vec3 lightDirection;
 
 	Texture diffuseTexture;
 	Texture normalTexture;
