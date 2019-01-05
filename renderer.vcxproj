@@ -119,6 +119,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\ShadowShader.cpp" />
     <ClCompile Include="src\DepthShader.cpp" />
     <ClCompile Include="src\PhongShaderTangentSpace.cpp" />
     <ClCompile Include="src\GouraudShaderSpecularMapping.cpp" />
@@ -132,6 +133,7 @@
     <ClCompile Include="src\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\ShadowShader.h" />
     <ClInclude Include="src\DepthShader.h" />
     <ClInclude Include="src\PhongShaderTangentSpace.h" />
     <ClInclude Include="src\GouraudShaderSpecularMapping.h" />
