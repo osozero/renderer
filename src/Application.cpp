@@ -11,6 +11,8 @@
 #include "GouraudShaderNormalMapping.h"
 #include "GouraudShaderSpecularMapping.h"
 #include "PhongShaderTangentSpace.h"
+#include "DepthShader.h"
+#include "ShadowShader.h"
 
 
 Vec3f eye(1,1,3);
@@ -24,8 +26,139 @@ const int height = 800;
 const int depth = 255;
 
 
+int doShadowShading()
+{
+	float *zbufferFloat = new float[width*height];
+	float *shadowBuffer = new float[width*height];
+
+	glm::vec4 lightDir(1.0, 1.0, 0.0, 1.0);
+
+	lightDir = glm::normalize(lightDir);
+
+	for(int i=0;i<width*height;i++)
+	{
+		shadowBuffer[i] = zbufferFloat[i] = -std::numeric_limits<float>::max();
+	}
+
+	TGAImage depth(width, height, TGAImage::RGB);	
+
+	Renderer renderer;
+
+
+	//prepared for depth shader
+	renderer.lookAt(Vec3f(lightDir.x,lightDir.y,lightDir.z), center, up);
+	renderer.setViewport(width / 8, height / 8, width * 3 / 4, height * 3 / 4);
+	renderer.setProjection(0);
+
+	std::string modelPath("resource/model/head.obj");
+	auto model = std::make_unique<Model>(modelPath.c_str());
+
+
+
+	DepthShader depthShader(*model, renderer.vPort, renderer.proj, renderer.mView);
+
+	Vec4f screenCoords[3];
+
+	for(int i =0;i<model->numberOfFaces();i++)
+	{
+		for(int j=0;j<3;j++)
+		{
+			screenCoords[j] = depthShader.vertex(i, j);
+		}
+
+		renderer.triangle(screenCoords, depthShader, depth, shadowBuffer);	
+	}
+	
+	depth.flipVertically();
+	depth.writeTGAFile("depth.tga");
+
+	glm::mat4 M = renderer.vPort*renderer.proj*renderer.mView;
+
+	//preparing for frame buffer
+	TGAImage image(width, height, TGAImage::RGB);
+
+
+	std::string diffuseTexturePath("resource/texture/head_diffuse.tga");
+	std::string normalTexturePath("resource/texture/head_nm_tangent.tga");
+	std::string specularTexturePath("resource/texture/head_spec.tga");
+
+	TGAImage diffuseTexture;
+	TGAImage normalTexture;
+	TGAImage specularTexture;
+
+	if (!diffuseTexture.readTGAFile(diffuseTexturePath.c_str()))
+	{
+		std::cerr << "texture image could not be loaded: " << diffuseTexturePath << std::endl;
+
+		return -1;
+	}
+
+	diffuseTexture.flipVertically();
+
+	if (!normalTexture.readTGAFile(normalTexturePath.c_str()))
+	{
+		std::cerr << "texture image could not be loaded: " << normalTexturePath << std::endl;
+
+		return -1;
+	}
+
+	normalTexture.flipVertically();
+
+	if (!specularTexture.readTGAFile(specularTexturePath.c_str()))
+	{
+		std::cerr << "texture image could not be loaded: " << specularTexturePath << std::endl;
+
+		return -1;
+	}
+
+	specularTexture.flipVertically();
+
+
+
+	Texture diffuseTex(diffuseTexture, *model);
+	Texture normTexture(normalTexture, *model);
+	Texture specTexture(specularTexture, *model);
+
+
+	renderer.lookAt(eye, center, up);
+	renderer.setViewport(width / 8, height / 8, width * 3 / 4, height * 3 / 4);
+	renderer.setProjection(-1.f / (eye - center).length());
+
+	ShadowShader shadowShader(*model, diffuseTex, normTexture, specTexture, renderer.vPort, renderer.proj, renderer.mView, M, glm::transpose(glm::inverse(renderer.proj*renderer.mView)), M*(renderer.vPort*renderer.proj*renderer.mView), shadowBuffer, lightDir);
+
+	Vec4f screenCoords2[3];
+
+	for(int i=0;i<model->numberOfFaces();i++)
+	{
+		for(int j=0;j<3;j++)
+		{
+			screenCoords2[j] = shadowShader.vertex(i, j);
+		}
+
+		renderer.triangle(screenCoords2, shadowShader, image, zbufferFloat);
+	}
+
+	image.flipVertically();
+
+	image.writeTGAFile("shadowMapping.tga");
+
+	delete[] zbufferFloat;
+	delete[] shadowBuffer;
+
+	return 0;
+
+
+
+
+	
+
+}
+
 int main(int argc, char** argv)
 {
+	doShadowShading();
+
+	return -1;
 
 	float *zbufferFloat = new float[width*height];
 	for (int i = width * height; i--; zbufferFloat[i] = -std::numeric_limits<float>::max());

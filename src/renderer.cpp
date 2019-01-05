@@ -61,7 +61,7 @@ void Renderer::lookAt(Vec3f eye, Vec3f center, Vec3f up)
 }
 
 
-void Renderer::triangle(Vec4f* pts, IShader &shader,TGAImage& image, TGAImage& zbuffer)
+void Renderer::triangle(Vec4f* pts, IShader &shader,TGAImage& image, TGAImage &zbuffer)
 {
 	Vec2f bboxmin(std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
 	Vec2f bboxmax(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
@@ -129,6 +129,50 @@ void Renderer::triangle(glm::mat4x3 &clipc, IShader &shader, TGAImage &image, fl
 				image.set(P.x, P.y, color);
 			}
 		}
+	}
+}
+
+void Renderer::triangle(Vec4f* pts, IShader &shader, TGAImage &image, float *zbuffer) {
+
+	Vec2f bboxmin(std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+	Vec2f bboxmax(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 2; j++) {
+			bboxmin[j] = std::min(bboxmin[j], pts[i][j] / pts[i][3]);
+			bboxmax[j] = std::max(bboxmax[j], pts[i][j] / pts[i][3]);
+		}
+	}
+
+
+	Vec2i P;
+	TGAColor color;
+	for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++) {
+		for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++) {
+
+			auto v1 = pts[0] / pts[0][3];
+			auto v2 = pts[1] / pts[1][3];
+			auto v3 = pts[2] / pts[2][3];
+
+			Vec3f c = barycentric(Vec2f(v1.x, v1.y), Vec2f(v2.x, v2.y), Vec2f(v3.x, v3.y), Vec2f(P.x, P.y));
+
+
+			float z = pts[0][2] * c.x + pts[1][2] * c.y + pts[2][2] * c.z;
+			float w = pts[0][3] * c.x + pts[1][3] * c.y + pts[2][3] * c.z;
+
+			int fragDepth = z / w;
+
+			if (c.x < 0 || c.y < 0 || c.z<0 || zbuffer[P.x + P.y*image.getWidth()]>fragDepth) {
+				continue;
+			}
+
+			bool discard = shader.fragment(c, color);
+			if (!discard) {
+				zbuffer[P.x + P.y*image.getWidth()] = fragDepth;
+				image.set(P.x, P.y, color);
+			}
+		
+		}
+
 	}
 }
 
