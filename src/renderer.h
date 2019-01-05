@@ -27,6 +27,7 @@ public:
 	void lookAt(Vec3f eye, Vec3f center, Vec3f up);
 
 	void triangle(Vec4f *pts, IShader &shader,TGAImage &image, TGAImage &zbuffer);
+	void triangle(glm::mat4x3 &clipc, IShader &shader, TGAImage &image, float *zbuffer);
 
 	~Renderer();
 

@@ -10,6 +10,7 @@
 #include "Renderer.h"
 #include "GouraudShaderNormalMapping.h"
 #include "GouraudShaderSpecularMapping.h"
+#include "PhongShaderTangentSpace.h"
 
 
 Vec3f eye(1,1,3);
@@ -25,6 +26,10 @@ const int depth = 255;
 
 int main(int argc, char** argv)
 {
+
+	float *zbufferFloat = new float[width*height];
+	for (int i = width * height; i--; zbufferFloat[i] = -std::numeric_limits<float>::max());
+
 	lightDirection.normalize();
 
 	Renderer renderer;
@@ -35,7 +40,7 @@ int main(int argc, char** argv)
 
 	std::string modelPath("resource/model/head.obj");
 	std::string diffuseTexturePath("resource/texture/head_diffuse.tga");
-	std::string normalTexturePath("resource/texture/head_nm.tga");
+	std::string normalTexturePath("resource/texture/head_nm_tangent.tga");
 	std::string specularTexturePath("resource/texture/head_spec.tga");
 	auto model = std::make_unique<Model>(modelPath.c_str());
 
@@ -97,6 +102,14 @@ int main(int argc, char** argv)
 
 
 
+
+	lightDir = glm::normalize(renderer.proj*renderer.mView*lightDir);
+	PhongShaderTangentSpace phongShaderTangentSpace(*model, diffuseTex, normTexture, specTexture, renderer.vPort, renderer.proj, renderer.mView, lightDir);
+
+	
+
+
+
 	for (int i = 0; i < model->numberOfFaces(); i++)
 	{
 		Vec4f screenCords[3];
@@ -104,14 +117,17 @@ int main(int argc, char** argv)
 		{
 			//screenCords[j] = gouraudShader.vertex(i, j);
 			//screenCords[j] = shaderNormalMapping.vertex(i, j);
-			screenCords[j] = shaderSpecularMapping.vertex(i, j);
+			//screenCords[j] = shaderSpecularMapping.vertex(i, j);
+
+			phongShaderTangentSpace.vertex(i, j);
+			
 		}
 
-		renderer.triangle(screenCords, shaderSpecularMapping, image, zbuffer);
+		renderer.triangle(phongShaderTangentSpace.varying_tri, phongShaderTangentSpace, image, zbufferFloat);
 	}
 
 	image.flipVertically();
 
-	image.writeTGAFile("GouraudShaderSpecularMapping.tga");
+	image.writeTGAFile("PhongShaderTangentSpace.tga");
 	return 0;
 }

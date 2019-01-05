@@ -27,8 +27,8 @@ Vec4f PhongShaderTangentSpace::vertex(int iface, int nthVert)
 
 	glm::vec4 glVertexV4 = proj * modelview*vert;
 
-	glm::column(varying_tri, nthVert, glVertexV4);
-	glm::column(varying_tri, nthVert, glVertexV4 / glVertexV4[3]);
+	varying_tri = glm::column(varying_tri, nthVert, glVertexV4);
+	ndc_tri = glm::column(ndc_tri, nthVert, glVertexV4 / glVertexV4[3]);
 
 	Vec4f glVertex(glVertexV4.x, glVertexV4.y, glVertexV4.z, glVertexV4.w);
 

@@ -97,6 +97,41 @@ void Renderer::triangle(Vec4f* pts, IShader &shader,TGAImage& image, TGAImage& z
 
 }
 
+
+void Renderer::triangle(glm::mat4x3 &clipc, IShader &shader, TGAImage &image, float *zbuffer) {
+	glm::mat3x3 m3x3vPort(vPort);
+	glm::mat<3, 4, float> pts = glm::transpose(m3x3vPort*clipc);
+	glm::mat<3, 2, float> pts2;
+	for (int i = 0; i < 3; i++) {
+		pts2[i] = (pts[i] / pts[i][3]);
+	}
+	Vec2f bboxmin(std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+	Vec2f bboxmax(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
+	Vec2f clamp(image.getWidth() - 1, image.getHeight() - 1);
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 2; j++) {
+			bboxmin[j] = std::max(0.f, std::min(bboxmin[j], pts2[i][j]));
+			bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], pts2[i][j]));
+		}
+	}
+	Vec2i P;
+	TGAColor color;
+	for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++) {
+		for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++) {
+			Vec3f bc_screen = barycentric(Vec2f(pts2[0][0],pts2[0][1]), Vec2f(pts2[1][0],pts2[1][1]), Vec2f(pts2[2][0],pts2[2][1]), Vec2f(P.x,P.y));
+			Vec3f bc_clip = Vec3f(bc_screen.x / pts[0][3], bc_screen.y / pts[1][3], bc_screen.z / pts[2][3]);
+			bc_clip = bc_clip / (bc_clip.x + bc_clip.y + bc_clip.z);
+			float frag_depth = glm::dot(clipc[2], glm::vec3(bc_clip.x,bc_clip.y,bc_clip.z));
+			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z<0 || zbuffer[P.x + P.y*image.getWidth()]>frag_depth) continue;
+			bool discard = shader.fragment(bc_clip, color);
+			if (!discard) {
+				zbuffer[P.x + P.y*image.getWidth()] = frag_depth;
+				image.set(P.x, P.y, color);
+			}
+		}
+	}
+}
+
 Renderer::~Renderer()
 {
 }

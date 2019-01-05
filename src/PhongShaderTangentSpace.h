@@ -4,6 +4,7 @@
 #include "Texture.h"
 #include <glm/vec4.hpp>
 #include <glm/mat4x2.hpp>
+#include <glm/gtc/matrix_access.hpp>
 
 class PhongShaderTangentSpace :
 	public IShader
@@ -38,6 +39,7 @@ public:
 		modelview(_modelview),
 		lightDirection(_lightDir)
 	{
+		
 	};
 
 	~PhongShaderTangentSpace(){};
