@@ -45,17 +45,30 @@ void Renderer::lookAt(Vec3f eye, Vec3f center, Vec3f up)
 	Vec3f z = (eye - center).normalize();
 	Vec3f x = cross(up, z).normalize();
 	Vec3f y = cross(z, x).normalize();
+
+	glm::vec3 eyev3(eye.x, eye.y, eye.z);
+	glm::vec3 centerv3(center.x, center.y, center.z);
+	glm::vec3 upv3(up.x, up.y, up.z);
+
+
+	glm::vec3 z1 = glm::normalize(eyev3 - centerv3);
+	glm::vec3 x1 = glm::normalize(glm::cross(upv3, z1));
+
+	glm::vec3 y1 = glm::normalize(glm::cross(z1, x1));
+
+
+
 	modelview = Matrix::identity(4);
 	for (int i = 0; i < 3; i++) {
-		modelview[0][i] = x[i];
-		modelview[1][i] = y[i];
-		modelview[2][i] = z[i];
+		modelview[0][i] = x1[i];
+		modelview[1][i] = y1[i];
+		modelview[2][i] = z1[i];
 		modelview[i][3] = -center[i];
 
 
-		mView[0][i] = x[i];
-		mView[1][i] = y[i];
-		mView[2][i] = z[i];
+		mView[0][i] = x1[i];
+		mView[1][i] = y1[i];
+		mView[2][i] = z1[i];
 		mView[i][3] = -center[i];
 	}
 }

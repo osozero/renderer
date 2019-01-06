@@ -15,7 +15,7 @@
 #include "ShadowShader.h"
 
 
-Vec3f eye(1,1,3);
+Vec3f eye(1,1,4);
 Vec3f center(0, 0, 0);
 Vec3f up(0, 1, 0);
 
@@ -31,10 +31,11 @@ int doShadowShading()
 	float *zbufferFloat = new float[width*height];
 	float *shadowBuffer = new float[width*height];
 
-	glm::vec4 lightDir(1.0, 1.0, 0.0, 1.0);
+	glm::vec4 lightDir(1.0, 1.0, 0.0,0.0f);
 
+	
 	lightDir = glm::normalize(lightDir);
-
+	
 	for(int i=0;i<width*height;i++)
 	{
 		shadowBuffer[i] = zbufferFloat[i] = -std::numeric_limits<float>::max();
@@ -50,7 +51,7 @@ int doShadowShading()
 	renderer.setViewport(width / 8, height / 8, width * 3 / 4, height * 3 / 4);
 	renderer.setProjection(0);
 
-	std::string modelPath("resource/model/head.obj");
+	std::string modelPath("resource/model/diablo3_pose.obj");
 	auto model = std::make_unique<Model>(modelPath.c_str());
 
 
@@ -72,15 +73,15 @@ int doShadowShading()
 	depth.flipVertically();
 	depth.writeTGAFile("depth.tga");
 
-	glm::mat4 M = renderer.vPort*renderer.proj*renderer.mView;
+	glm::mat4 M = renderer.mView*renderer.proj*renderer.vPort;
 
 	//preparing for frame buffer
 	TGAImage image(width, height, TGAImage::RGB);
 
 
-	std::string diffuseTexturePath("resource/texture/head_diffuse.tga");
-	std::string normalTexturePath("resource/texture/head_nm_tangent.tga");
-	std::string specularTexturePath("resource/texture/head_spec.tga");
+	std::string diffuseTexturePath("resource/texture/diablo3_pose_diffuse.tga");
+	std::string normalTexturePath("resource/texture/diablo3_pose_nm.tga");
+	std::string specularTexturePath("resource/texture/diablo3_pose_spec.tga");
 
 	TGAImage diffuseTexture;
 	TGAImage normalTexture;
@@ -119,12 +120,16 @@ int doShadowShading()
 	Texture normTexture(normalTexture, *model);
 	Texture specTexture(specularTexture, *model);
 
-
 	renderer.lookAt(eye, center, up);
 	renderer.setViewport(width / 8, height / 8, width * 3 / 4, height * 3 / 4);
 	renderer.setProjection(-1.f / (eye - center).length());
 
-	ShadowShader shadowShader(*model, diffuseTex, normTexture, specTexture, renderer.vPort, renderer.proj, renderer.mView, M, glm::transpose(glm::inverse(renderer.proj*renderer.mView)), M*(renderer.vPort*renderer.proj*renderer.mView), shadowBuffer, lightDir);
+	auto invertTranspose = glm::transpose(glm::inverse(renderer.proj*renderer.mView));
+
+
+	auto mshader = M * glm::inverse(renderer.mView * renderer.proj *renderer.vPort);
+
+	ShadowShader shadowShader(*model, diffuseTex, normTexture, specTexture, renderer.vPort, renderer.proj, renderer.mView, renderer.mView, invertTranspose, mshader, shadowBuffer, lightDir);
 
 	Vec4f screenCoords2[3];
 
@@ -140,7 +145,7 @@ int doShadowShading()
 
 	image.flipVertically();
 
-	image.writeTGAFile("shadowMapping.tga");
+	image.writeTGAFile("shadowMapping3.tga");
 
 	delete[] zbufferFloat;
 	delete[] shadowBuffer;

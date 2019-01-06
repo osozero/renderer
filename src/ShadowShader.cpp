@@ -1,6 +1,7 @@
 #include "ShadowShader.h"
 #include <glm/gtc/matrix_access.inl>
 #include <algorithm>
+#include <iostream>
 
 
 Vec4f ShadowShader::vertex(int iface, int nthVert)
@@ -23,12 +24,12 @@ bool ShadowShader::fragment(Vec3f bar, TGAColor& color)
 	glm::vec3 glmBar(bar.x, bar.y, bar.z);
 
 	glm::vec4 shadowbufferPoint = glm::vec4(glmBar * varying_tri,1.0f)*uniform_MShadow;
-
+	
 	shadowbufferPoint = shadowbufferPoint / shadowbufferPoint[3];
 
 	int index = int(shadowbufferPoint[0]) + shadowbufferPoint[1] * width;
-
-	float shadow = 0.3 + 7 * (shadowbuffer[index] < shadowbufferPoint[2]);
+	
+	float shadow = 0.3 + 0.7 * (shadowbuffer[index] < shadowbufferPoint[2]+ 43.34);
 
 	Vec3f interpolatedTexCoords(0, 0, 0);
 	float temp;
@@ -59,7 +60,7 @@ bool ShadowShader::fragment(Vec3f bar, TGAColor& color)
 
 	for(int i=0;i<3;i++)
 	{
-		color[i] = std::min<float>(20 + c[i] * shadow*(1.2*diff + 0.6*spec), 255);
+		color[i] = std::min<float>(20 + c[i] * shadow*(1.2*diff + 0*spec), 255);
 	}
 
 	return false;

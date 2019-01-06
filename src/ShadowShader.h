@@ -30,7 +30,7 @@ public:
 	glm::mat4 modelview;
 
 
-	ShadowShader(Model &_model, Texture &_dTexture, Texture &_nTexture, Texture &_sTexture, glm::mat4 &_viewport, glm::mat4 &_proj, glm::mat4 &_modelview, glm::mat4 M, glm::mat4 MIT, glm::mat4 MS,float * shadownuffer_,glm::vec4 lightDir_)
+	ShadowShader(Model &_model, Texture &_dTexture, Texture &_nTexture, Texture &_sTexture, glm::mat4 &_viewport, glm::mat4 &_proj, glm::mat4 &_modelview, glm::mat4 &M, glm::mat4 &MIT, glm::mat4 &MS,float * shadownuffer_,glm::vec4 lightDir_)
 		:model(_model),
 		diffuseTexture(_dTexture),
 		normalTexture(_nTexture),
@@ -44,6 +44,7 @@ public:
 		shadowbuffer(shadownuffer_),
 		lightDir(lightDir_)
 	{};
+
 
 	~ShadowShader(){};
 	Vec4f vertex(int iface, int nthVert) override;
